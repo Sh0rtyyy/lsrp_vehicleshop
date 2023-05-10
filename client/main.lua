@@ -128,6 +128,7 @@ end
 
 local function openVehicleSubmenu(_shopIndex, _selected, _scrollIndex)
     local subMenu = {_shopIndex, _selected, _scrollIndex}
+    local hintShown = false
     local vData = Config.vehicleList[Config.vehicleShops[subMenu[1]].vehicleList][subMenu[2]].values[subMenu[3]]
     local options = {
         {close = false, icon = 'info', label = locale('vehicle_info'), values = {
@@ -179,6 +180,13 @@ local function openVehicleSubmenu(_shopIndex, _selected, _scrollIndex)
         id = 'openVehicleSubmenu',
         title = vData.label,
         position = Config.menuPosition == 'right' and 'top-right' or 'top-left',
+        onSelected = function(selected, scrollIndex, args)
+            if not hintShown then
+                notification('TIP', locale('tip'), 'inform')
+                hintShown = true
+            end
+            --_spawnLocalVehicle(_shopIndex, selected, scrollIndex)
+        end,
         onSideScroll = function(selected, scrollIndex, args)
             if not options[selected].menuArg then 
                 return 
@@ -186,6 +194,7 @@ local function openVehicleSubmenu(_shopIndex, _selected, _scrollIndex)
         end,
         onClose = function(keyPressed)
             lib.showMenu('vehicleshop')
+            _deleteVehicle(vehiclePreview)
         end,
         options = options
     }, function(selected, scrollIndex, args)
@@ -232,6 +241,7 @@ end
 local function openMenu(_shopIndex)
     local hintShown = false
     lastCoords = GetEntityCoords(cache.ped)
+    local player = GetPlayerPed()
 
     local options = {}
     local _vehicleClassCFG = Config.vehicleList[Config.vehicleShops[_shopIndex].vehicleList]
@@ -257,14 +267,7 @@ local function openMenu(_shopIndex)
         title = Config.vehicleShops[_shopIndex].shopLabel,
         position = Config.menuPosition == 'right' and 'top-right' or 'top-left',
         onSideScroll = function(selected, scrollIndex, args)
-            _spawnLocalVehicle(_shopIndex, selected, scrollIndex)
-        end,
-        onSelected = function(selected, scrollIndex, args)
-            if not hintShown then
-                notification('TIP', locale('tip'), 'inform')
-                hintShown = true
-            end
-            _spawnLocalVehicle(_shopIndex, selected, scrollIndex)
+            --_spawnLocalVehicle(_shopIndex, selected, scrollIndex)
         end,
         onClose = function(keyPressed)
             DoScreenFadeOut(500)
@@ -290,6 +293,7 @@ local function openMenu(_shopIndex)
         end
 
         openVehicleSubmenu(_shopIndex, selected, scrollIndex)
+        _spawnLocalVehicle(_shopIndex, selected, scrollIndex)
     end)
 
     DoScreenFadeOut(500)
@@ -389,28 +393,26 @@ local function mainThread()
                 end
 
                 for i=1, #shopData.showcaseVehicle do
-                    if shopData.showcaseVehicle[i].handle then
-                        local ModelHash = shopData.showcaseVehicle[i].vehicleModel
-                        if not IsModelInCdimage(ModelHash) then return end
-                        RequestModel(ModelHash)
-                        while not HasModelLoaded(ModelHash) do
-                            Wait(0)
-                        end
-
-                        shopData.showcaseVehicle[i].handle = CreateVehicle(ModelHash, shopData.showcaseVehicle[i].coords.xyz, shopData.showcaseVehicle[i].coords.w, false, false)
-                        SetEntityAsMissionEntity(shopData.showcaseVehicle[i].handle)
-                        SetVehicleDoorsLocked(shopData.showcaseVehicle[i].handle, 2)
-                        SetVehicleUndriveable(shopData.showcaseVehicle[i].handle, true)
-                        SetVehicleDoorsLockedForAllPlayers(shopData.showcaseVehicle[i].handle, true)
-                        SetVehicleDirtLevel(shopData.showcaseVehicle[i].handle, 0)
-                        SetVehicleNumberPlateText(shopData.showcaseVehicle[i].handle, ('SHWCS%s'):format(i))
-                        SetVehicleWindowTint(shopData.showcaseVehicle[i].handle, 3)
-                        SetEntityInvincible(shopData.showcaseVehicle[i].handle, true)
-                        SetVehicleDirtLevel(shopData.showcaseVehicle[i].handle, 0.0)
-                        SetVehicleOnGroundProperly(shopData.showcaseVehicle[i].handle)
-                        FreezeEntityPosition(shopData.showcaseVehicle[i].handle, true)
-                        SetVehicleCustomPrimaryColour(shopData.showcaseVehicle[i].handle, shopData.showcaseVehicle[i].color[1] or 255, shopData.showcaseVehicle[i].color[2] or 0, shopData.showcaseVehicle[i].color[3] or 0)
+                    local ModelHash = shopData.showcaseVehicle[i].vehicleModel
+                    if not IsModelInCdimage(ModelHash) then return end
+                    RequestModel(ModelHash)
+                    while not HasModelLoaded(ModelHash) do
+                        Wait(0)
                     end
+
+                    shopData.showcaseVehicle[i].handle = CreateVehicle(ModelHash, shopData.showcaseVehicle[i].coords.xyz, shopData.showcaseVehicle[i].coords.w, false, false)
+                    SetEntityAsMissionEntity(shopData.showcaseVehicle[i].handle)
+                    SetVehicleDoorsLocked(shopData.showcaseVehicle[i].handle, 2)
+                    SetVehicleUndriveable(shopData.showcaseVehicle[i].handle, true)
+                    SetVehicleDoorsLockedForAllPlayers(shopData.showcaseVehicle[i].handle, true)
+                    SetVehicleDirtLevel(shopData.showcaseVehicle[i].handle, 0)
+                    SetVehicleNumberPlateText(shopData.showcaseVehicle[i].handle, ('SHWCS%s'):format(i))
+                    SetVehicleWindowTint(shopData.showcaseVehicle[i].handle, 3)
+                    SetEntityInvincible(shopData.showcaseVehicle[i].handle, true)
+                    SetVehicleDirtLevel(shopData.showcaseVehicle[i].handle, 0.0)
+                    SetVehicleOnGroundProperly(shopData.showcaseVehicle[i].handle)
+                    FreezeEntityPosition(shopData.showcaseVehicle[i].handle, true)
+                    SetVehicleCustomPrimaryColour(shopData.showcaseVehicle[i].handle, shopData.showcaseVehicle[i].color[1] or 255, shopData.showcaseVehicle[i].color[2] or 0, shopData.showcaseVehicle[i].color[3] or 0)
                 end
                 shopData.npcData.npc = createNpc(shopData.npcData.model, shopData.npcData.position)
                 
